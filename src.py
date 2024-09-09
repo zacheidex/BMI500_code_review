@@ -5,10 +5,8 @@ import numpy as np
 from transformers import BertTokenizer,BertModel
 import torch.nn as nn
 from tqdm import tqdm
-import numpy as np
 from settings import get_module_logger
 from sklearn.metrics import f1_score
-from settings import get_module_logger
 from transformers import AdamW, get_linear_schedule_with_warmup
 from collections import defaultdict
 from flag import get_parser
@@ -160,7 +158,7 @@ def train_fn(data_loader, model, optimizer, device, scheduler, n_examples):
 def run():
 
     df_train = pd.read_csv(args.training_file).dropna().reset_index(drop=True)
-    df_valid = pd.read_csv(args.validation_file).dropna().reset_index(drop=True)
+    df_valid = pd.read_csv(args.validation_file).dropna().reset_index(drop=True) #consider renaming valid to val, valid seems like 'real' and not 'validation'
 
     logger.info("train len - {} valid len - {}".format(len(df_train), len(df_valid)))
 
@@ -189,6 +187,9 @@ def run():
     )
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    if torch.cuda.device_count() > 1: #added support for multi-GPU computing. This can cause previously
+        model = torch.nn.DataParallel(model)
     
     model = BERT()
     model.to(device)
